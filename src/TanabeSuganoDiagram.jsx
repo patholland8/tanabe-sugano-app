@@ -248,8 +248,10 @@ const TanabeSuganoDiagram = () => {
     const freeIonLabels = configs[config].freeIonLabels;
 
     const svg = d3.select(svgRef.current)
-      .attr('width', width)
-      .attr('height', height)
+      .attr('width', '100%')
+      .attr('height', 'auto')
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
       .style('background', '#f8f9fa');
 
     // Remove everything and redraw
@@ -472,7 +474,7 @@ const TanabeSuganoDiagram = () => {
           </div>
         </div>
         
-        <div className='ts-right' style={{ backgroundColor: 'white', borderLeft: 'gray 2px solid', paddingLeft: '1.25rem', marginTop: '0.313rem', color: 'black' }}>
+        <div className='ts-right' style={{ backgroundColor: 'white', paddingLeft: '1.25rem', marginTop: '0.313rem', color: 'black' }}>
           <div style={{ marginBottom: '0.625rem', color: 'black' }}>
             <label>Select configuration: </label>
             <select value={config} onChange={e => setConfig(e.target.value)}>

@@ -56,12 +56,57 @@ h2 {
 .contentContainer {
   display: grid;
   justify-items: center;
-  grid-template-columns: 1fr 4fr 3fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 7fr) minmax(260px, 2fr) minmax(0, 1fr);
 }
 
 .ts-left {
-  justify-self: right;
-  margin-right: 2rem; 
+  justify-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  margin-right: 0;
+}
+
+.ts-right {
+  border-left: 2px solid gray;
+}
+
+/* Mobile: stack diagram on top, right panel below */
+@media (max-width: 768px) {
+  .contentContainer {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .left-spacer,
+  .right-spacer {
+    display: none;
+  }
+
+  .ts-left {
+    margin-right: 0;
+    justify-self: center;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .ts-left > div,
+  .ts-left svg {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+  }
+
+  .ts-right {
+    border-left: none !important;
+    border-top: 2px solid gray !important;
+    margin-top: 1rem !important;
+    padding-top: 1rem !important;
+    padding-left: 1.25rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .noSelect {

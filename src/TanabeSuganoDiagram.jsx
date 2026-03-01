@@ -520,7 +520,7 @@ const TanabeSuganoDiagram = () => {
     <div style={{paddingTop: '0.625rem',  paddingLeft: '1.56rem', alignContent: 'center'}}>
       <strong>References:</strong>
       <ol className='references'>
-        <li>Lancashire, R.J. <i>Tanabe-Sugano diagrams</i> (Dataset). University of the West Indies, Mona, April 2, 2019. http://wwwchem.uwimona.edu.jm/courses/Tanabe-Sugano/TSspread.html</li>
+        <li>Lancashire, R.J. <i>Tanabe-Sugano diagrams</i> (Dataset). University of the West Indies, Mona, April 2, 2019. https://wwwchem.uwimona.edu.jm/courses/Tanabe-Sugano/TSspread.html</li>
         <li>Figgis, B.N.; Hitchman, M.A. <i>Ligand Field Theory and Its Applications</i>; Wiley-VCH, 2000.</li>
       </ol>
       <p></p>

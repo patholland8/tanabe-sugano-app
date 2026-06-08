@@ -232,10 +232,53 @@ const TanabeSuganoDiagram = () => {
   const svgRef = useRef();
   const [deltaB, setDeltaB] = useState(25);
   const [config, setConfig] = useState('d2');
+  const [dimensions, setDimensions] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const width = 570;
-  const height = 800;
-  const margin = { top: 20, right: 40, bottom: 60, left: 60 };
+  // Detect viewport size and set responsive dimensions on mount
+  useEffect(() => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const isMobile = viewportWidth < 600;
+    setIsMobile(isMobile);
+
+    let responsiveDimensions;
+    
+    if (viewportWidth < 600) {
+      // Mobile: responsive to viewport
+      responsiveDimensions = { 
+        width: viewportWidth * 0.9,
+        height: (viewportWidth * 0.9) * 1.4, // maintain aspect ratio
+      };
+    } else if (viewportWidth < 1024) {
+      // Tablet: fixed size
+      responsiveDimensions = { 
+        width: viewportWidth * 0.5, 
+        height: (viewportWidth * 0.5) * 1.4,
+      };
+    } else if (viewportHeight <= 900) {
+      // Short desktop or horizontal tablet
+      responsiveDimensions = {
+        width: viewportHeight * 0.8 / 1.4, // maintain aspect ratio
+        height: viewportHeight * 0.8,
+      };
+    } else {
+      // Desktop: larger fixed size
+      responsiveDimensions = { 
+        width: 570, 
+        height: 800,
+      };
+    }
+    
+    setDimensions(responsiveDimensions);
+  }, []);
+
+  // Use default dimensions if not yet initialized
+  const width = dimensions?.width || 570;
+  const height = dimensions?.height || 800;
+  const margin = isMobile
+    ? { top: 30, right: 40, bottom: 55, left: 55 }
+    : { top: 30, right: 40, bottom: 60, left: 60 };
   const yMax = 70;
   const deltaBStart = 0;
   const deltaBEnd = 40;
@@ -248,10 +291,8 @@ const TanabeSuganoDiagram = () => {
     const freeIonLabels = configs[config].freeIonLabels;
 
     const svg = d3.select(svgRef.current)
-      .attr('width', '100%')
-      .attr('height', 'auto')
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .attr('width', width)
+      .attr('height', height)
       .style('background', '#f8f9fa');
 
     // Remove everything and redraw
@@ -287,7 +328,7 @@ const TanabeSuganoDiagram = () => {
     svg.append("text")
     .attr("text-anchor", "middle")
     .attr("x", width * 1.1 / 2)
-    .attr("y", height - .2 * margin.bottom) // position below axis
+    .attr("y", (height - .2 * margin.bottom) +  (isMobile ? 8 : 0)) // position below axis
     .attr("font-weight", "bold")
     .style("font-size", "1.125rem")
     .classed('noSelect', true)
@@ -296,7 +337,7 @@ const TanabeSuganoDiagram = () => {
     svg.append("text")
     .attr("text-anchor", "middle")
     .attr("x", -height / 2)
-    .attr("y", margin.left / 3) // position to the left of y-axis
+    .attr("y", (margin.left / 3) + (isMobile ? -5 : 0)) // position to the left of y-axis
     .attr("transform", `rotate(-90)`)
     .attr("font-weight", "bold")
     .style("font-size", "1.125rem")
@@ -446,7 +487,7 @@ const TanabeSuganoDiagram = () => {
     })
     
 
-  }, [config]);
+  }, [config, dimensions]);
 
   useEffect(() => {
     d3.select(svgRef.current).select('.cursor')
@@ -474,7 +515,7 @@ const TanabeSuganoDiagram = () => {
           </div>
         </div>
         
-        <div className='ts-right' style={{ backgroundColor: 'white', paddingLeft: '1.25rem', marginTop: '0.313rem', color: 'black' }}>
+        <div className='ts-right' style={{ backgroundColor: 'white', borderLeft: 'gray 2px solid', paddingLeft: '1.25rem', marginTop: '0.313rem', color: 'black' }}>
           <div style={{ marginBottom: '0.625rem', color: 'black' }}>
             <label>Select configuration: </label>
             <select value={config} onChange={e => setConfig(e.target.value)}>
@@ -486,17 +527,26 @@ const TanabeSuganoDiagram = () => {
               <option value="d7">d⁷</option>
               <option value="d8">d⁸</option>
             </select>
-            <p style={{marginTop: '0.5rem'}}>Drag black vertical line to set ligand-field strength.</p>
+            <p style={{marginTop: '0.5rem'}}>Drag black vertical line to set ligand-field strength. E/B values (scaled) listed below.</p>
           </div>
 
         <strong>Δₒ/B:</strong> {deltaB.toFixed(2)}
         <div>
         <ul style={{marginTop: '0.625rem'}}>
-          {configs[config].terms.map((term, index) => (
-            <li key={index} style={{ color: (term.allowedEnd && deltaB > term.allowedEnd) || (term.allowedStart && deltaB < term.allowedStart) || !term.allowed ? 'black' : term.color }}>
-              <div className='row'><span className='label'><span className='nowrap-text'>{term.label}:</span> <span className='nowrap-text'>E/B =</span> </span><span className='value'>{term.fn(deltaB).toFixed(1) || 0}</span></div>
-            </li>
-          ))}
+          {configs[config].terms.map((term, index) => {
+            const eOverB = term.fn(deltaB);
+            const firstNonzeroAllowed = configs[config].terms.find(t => {
+              const isAllowed = t.allowed && !(t.allowedEnd && deltaB > t.allowedEnd) && !(t.allowedStart && deltaB < t.allowedStart);
+              return t.fn(deltaB) !== 0 && isAllowed;
+            })?.fn(deltaB);
+            const normalizedValue = firstNonzeroAllowed ? eOverB / firstNonzeroAllowed : 0;
+            
+            return (
+              <li key={index} style={{ color: (term.allowedEnd && deltaB > term.allowedEnd) || (term.allowedStart && deltaB < term.allowedStart) || !term.allowed ? 'black' : term.color }}>
+                <div className='row'> <span className='label'><span style={{fontSize: '1rem'}} className='nowrap-text'>{term.label}:</span> </span> <span style={{fontFamily: 'monospace', fontSize: '1rem'}} className='value' > {(eOverB || 0).toFixed(1)}{" ("}<span style={{ textDecoration: normalizedValue === 1 ? 'underline' : 'none' }}>{normalizedValue ? `${normalizedValue.toFixed(1)}` : '0.0'}</span>{")"}</span> </div>
+              </li>
+            );
+          })}
         </ul>
         </div>
 
@@ -516,17 +566,14 @@ const TanabeSuganoDiagram = () => {
       <div className='right-spacer'></div>
       </div>
 
-    <div style={{marginTop: '1.5rem', borderTop: 'gray 2px solid', width: 'clamp(400px, 80vw, 800px)'}}>
-    <div style={{paddingTop: '0.625rem',  paddingLeft: '1.56rem', alignContent: 'center'}}>
+    <div className='referenceBlock'>
       <strong>References:</strong>
       <ol className='references'>
-        <li>Lancashire, R.J. <i>Tanabe-Sugano diagrams</i> (Dataset). University of the West Indies, Mona, April 2, 2019. https://wwwchem.uwimona.edu.jm/courses/Tanabe-Sugano/TSspread.html</li>
+        <li>Lancashire, R.J. <i>Tanabe-Sugano diagrams</i> (Dataset). University of the West Indies, Mona, April 2, 2019. http://wwwchem.uwimona.edu.jm/courses/Tanabe-Sugano/TSspread.html</li>
         <li>Figgis, B.N.; Hitchman, M.A. <i>Ligand Field Theory and Its Applications</i>; Wiley-VCH, 2000.</li>
       </ol>
       <p></p>
     </div>
-    </div>
-
     </div>
 
     
